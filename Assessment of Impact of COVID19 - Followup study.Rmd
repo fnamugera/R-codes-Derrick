@@ -20,8 +20,8 @@ library(readxl)
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
 
-covdata<- readxl::read_xlsx("D:/Learnings/work/OJ/COVID19 Impact study/Study_on_the_Impact_of_COVID-19_on_the_Tourism_Industry_in_Uganda_in_the_last_one_year_March_2020-March_2021_-_all_versions_-_labels_-_2021-04-09-15-19-13.xlsx", sheet = 'Study on the Impact of COVID...')
-
+#covdata<- readxl::read_xlsx("D:/Learnings/work/OJ/COVID19 Impact study/Study_on_the_Impact_of_COVID-19_on_the_Tourism_Industry_in_Uganda_in_the_last_one_year_March_2020-March_2021_-_all_versions_-_labels_-_2021-04-09-15-19-13.xlsx", sheet = 'Study on the Impact of COVID...')
+covdata<-readRDS("C:/Users/Derrick pc/Desktop/covid/R-codes-Derrick/covdata.RDS")
 ```
 
 ### Details of the Tourism Establishments
