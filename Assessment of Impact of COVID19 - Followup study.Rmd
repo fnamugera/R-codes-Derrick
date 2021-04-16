@@ -240,6 +240,12 @@ Table 30: Receipt of change in income
 covdata %>% group_by(Response=`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% drop_na(`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% kable()
 ```
 
+Table 31: Lost income in the last one year
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% group_by(Response=`27.what is the level of income lost over the last one year`) %>% drop_na(`27.what is the level of income lost over the last one year `) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% kable()
+```
+
+
 Derrick start your work from here:
 Testing
 $ git config --global user.email "you@example.com"
