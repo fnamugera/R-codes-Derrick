@@ -234,5 +234,5 @@ Table 29: Hosting of Conferences:
 covdata %>% group_by(Response = `21. Did you host any conferences in the last one year`) %>% drop_na(`21. Did you host any conferences in the last one year`) %>% summarise(count = n()) %>% mutate(`Percent (%)` =paste0(round(count/sum(count)*100), "%"))%>%  kable()
 
 ```
-
+Derrick start your work from here:
 
