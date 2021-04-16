@@ -1,0 +1,238 @@
+---
+title: "Assessment of Impact of COVID19"
+author: "Frank NAMUGERA"
+date: '`r as.Date(Sys.time())`'
+output: html_document
+---
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(janitor)
+library(knitr)
+library(reshape2)
+library(tidyr)
+library(data.table)
+library(readxl)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+
+covdata<- readxl::read_xlsx("D:/Learnings/work/OJ/COVID19 Impact study/Study_on_the_Impact_of_COVID-19_on_the_Tourism_Industry_in_Uganda_in_the_last_one_year_March_2020-March_2021_-_all_versions_-_labels_-_2021-04-09-15-19-13.xlsx", sheet = 'Study on the Impact of COVID...')
+
+```
+
+### Details of the Tourism Establishments
+Table 1: Respondents by Type of Business
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% group_by(`2. Type of Business`) %>% summarise(Count = n()) %>% mutate(Per = paste0(round(Count/sum(Count)*100), '%')) %>% adorn_totals(where = 'row')  %>% kable()
+
+```
+
+Table 2: Demographics of the Respondents
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% mutate(Respondent = case_when(
+  str_detect(`Other (Specify)...7`, 'Receptionist|Reception') ~ 'Receptionist', 
+  str_detect(`Other (Specify)...7`, 'owner|Owner')~'CEO' , 
+   str_detect(`Other (Specify)...7`, 'Managing director|manager|General Manager|Director|Manager')~'Director/Manager',
+    str_detect(`Other (Specify)...7`, 'Accountant|accountant')~'Accountant' , 
+  TRUE ~ `2. What is the Position of the Respondent?` )) %>% group_by(Respondent) %>% summarise(Count = n()) %>% mutate(Per = paste0(round(Count/sum(Count)*100), '%')) %>% adorn_totals(where =  'row') %>% kable()
+
+
+```
+
+Table 3: Years in Business										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% mutate(`4. Years in Business of the Company` = factor(`4. Years in Business of the Company`, levels = c('0-3years', '4-6 years', '7-9 years', '10-12 years', '13-15 years', '15+ years'))) %>% group_by(`4. Years in Business of the Company`) %>% summarise(Count = n()) %>% mutate(Per = paste0(round(Count/sum(Count)*100), '%')) %>% adorn_totals(where = 'row') %>% kable()
+
+```
+
+Table 4: Years in Business and Business Type										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% mutate(`4. Years in Business of the Company` = factor(`4. Years in Business of the Company`, levels = c('0-3years', '4-6 years', '7-9 years', '10-12 years', '13-15 years', '15+ years'))) %>% group_by(`4. Years in Business of the Company`, `2. Type of Business`) %>% summarise(Count = n()) %>% pivot_wider(names_from = `2. Type of Business`, values_from = 'Count') %>% adorn_totals(where = c('row', 'col')) %>% kable()  #%>% mutate(Per = paste0(round(Count/sum(Count)*100), '%'))
+
+```
+
+Table 5: Employees by Establishment										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% mutate(`5. Approximately how many employees are there in your organization?` = factor(`5. Approximately how many employees are there in your organization?`, levels = c('0-10 employees', '11-20 employees', '21-30 employees', '31-40 employees', '41-50 employees', 'Over 50 employees', 'Over 100 employees'))) %>% group_by(`5. Approximately how many employees are there in your organization?`) %>% summarise(Count = n()) %>% mutate(Per = paste0(round(Count/sum(Count)*100), '%')) %>% adorn_totals(where = 'row') %>% kable()
+
+```
+
+Table 6: Employees by Years in Business of a company
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% mutate(`5. Approximately how many employees are there in your organization?` = factor(`5. Approximately how many employees are there in your organization?`, levels = c('0-10 employees', '11-20 employees', '21-30 employees', '31-40 employees', '41-50 employees', 'Over 50 employees', 'Over 100 employees')), `4. Years in Business of the Company` = factor(`4. Years in Business of the Company`, levels = c('0-3years', '4-6 years', '7-9 years', '10-12 years', '13-15 years', '15+ years'))) %>% group_by(Numer_of_Employees = `5. Approximately how many employees are there in your organization?`, `4. Years in Business of the Company`) %>% summarise(Count = n()) %>% pivot_wider(names_from = `4. Years in Business of the Company`, values_from = 'Count') %>% adorn_totals(where = c('row', 'col')) %>% kable()
+
+```
+
+Table 7: Employees by Business Type								
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% mutate(`5. Approximately how many employees are there in your organization?` = factor(`5. Approximately how many employees are there in your organization?`, levels = c('0-10 employees', '11-20 employees', '21-30 employees', '31-40 employees', '41-50 employees', 'Over 50 employees', 'Over 100 employees')), `4. Years in Business of the Company` = factor(`4. Years in Business of the Company`, levels = c('0-3years', '4-6 years', '7-9 years', '10-12 years', '13-15 years', '15+ years'))) %>% group_by(Numer_of_Employees = `5. Approximately how many employees are there in your organization?`, `2. Type of Business`) %>% summarise(Count = n()) %>% pivot_wider(names_from = `2. Type of Business`, values_from = 'Count') %>% adorn_totals(where = c('row', 'col')) %>% kable()
+```
+
+
+Table 8: Services offered by Tourism Businesses
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% mutate(`4. Years in Business of the Company` = factor(`4. Years in Business of the Company`, levels = c('0-3years', '4-6 years', '7-9 years', '10-12 years', '13-15 years', '15+ years'))) %>% group_by(`4. Years in Business of the Company`) %>% summarise(Count = n()) %>% mutate(Per = paste0(round(Count/sum(Count)*100), '%')) %>% adorn_totals(where = 'row') %>% kable()
+
+```
+
+Business Performance									
+Table 9: Business Performance										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% mutate(`7. How do you rate your business performance in the last 12 months?` = factor(`7. How do you rate your business performance in the last 12 months?`, levels = c('Poor', 'Fair', 'Good'))) %>% group_by(`7. How do you rate your business performance in the last 12 months?`) %>% summarise(Count = n()) %>% mutate(Per = paste0(round(Count/sum(Count)*100), '%')) %>% adorn_totals(where = 'row') %>% kable()
+```
+
+Table 10: Business Performance	
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% mutate(`7. How do you rate your business performance in the last 12 months?` = factor(`7. How do you rate your business performance in the last 12 months?`, levels = c('Poor', 'Fair', 'Good'))) %>% group_by(`7. How do you rate your business performance in the last 12 months?`, `2. Type of Business`) %>% summarise(Count = n()) %>% pivot_wider(names_from = `7. How do you rate your business performance in the last 12 months?`, values_from = `Count`)   %>% kable()
+```
+
+Table 11: Years in Business and Business Performance										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% mutate(`7. How do you rate your business performance in the last 12 months?` = factor(`7. How do you rate your business performance in the last 12 months?`, levels = c('Poor', 'Fair', 'Good')), `4. Years in Business of the Company` = factor(`4. Years in Business of the Company`, levels = c('0-3years', '4-6 years', '7-9 years', '10-12 years', '13-15 years', '15+ years'))) %>% group_by(`7. How do you rate your business performance in the last 12 months?`, `4. Years in Business of the Company`) %>% summarise(Count = n()) %>% pivot_wider(names_from = `7. How do you rate your business performance in the last 12 months?`, values_from = `Count`)   %>% kable()
+```
+
+Employment										
+Table 12: Workdforce status 										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select(`17a. What was your total number of workers before COVID-19?`:`17e. How many of your workers are facing pay cut due to the pandemic?`) %>% reshape2::melt() %>% group_by(variable) %>% summarise(value = sum(value, na.rm = T))  %>% kable()
+```
+
+Table 13: Status of Workforce by Tourism Industry							
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select(`2. Type of Business`,  `17a. What was your total number of workers before COVID-19?`:`17e. How many of your workers are facing pay cut due to the pandemic?`) %>% reshape2::melt(id = "2. Type of Business") %>% group_by(`2. Type of Business`,variable) %>% summarise(value = sum(value, na.rm = T)) %>% pivot_wider(names_from = 'variable', values_from = 'value') %>% adorn_totals(where = c('row', 'col')) %>% kable()
+```
+
+Table 14: Workdforce status by Hotel										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select(`1. What is the Company/Organisation/Business name?`,  `17a. What was your total number of workers before COVID-19?`:`17e. How many of your workers are facing pay cut due to the pandemic?`) %>% reshape2::melt(id = "1. What is the Company/Organisation/Business name?") %>% group_by(`1. What is the Company/Organisation/Business name?`,variable) %>% summarise(value = sum(value, na.rm = T)) %>% pivot_wider(names_from = 'variable', values_from = 'value') %>% adorn_totals(where = c('row', 'col')) %>% kable()
+```
+
+Table 15: Status of current Workforce										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% group_by(`18. Have you downsized/ increased your work force in the last 12 months?`) %>% summarise(Count = n()) %>% mutate(Per = paste0(round(Count/sum(Count)*100), '%')) %>% adorn_totals(where = 'row') %>% left_join(
+covdata %>% select(Increased = `19a. By what percentage have you increased your workforce?`, Downsized = `19b. By what percentage have you downsized your workforce?`) %>% reshape2::melt() %>% group_by(`18. Have you downsized/ increased your work force in the last 12 months?` = variable) %>% summarise(Mean =paste0(round(mean(value, na.rm = T)), "%"))) %>% kable()
+```
+
+Table 16: Status of current Workforce by Tourism Industry:
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% group_by(`18. Have you downsized/ increased your work force in the last 12 months?`, `2. Type of Business`) %>% summarise(Count = n()) %>% pivot_wider(names_from = `18. Have you downsized/ increased your work force in the last 12 months?`, values_from = `Count`)  %>% adorn_totals(where =c('row', 'col'))  %>% kable()
+```
+
+Occupancy Levels and Room Cancellations in 2021										
+Table 17: Mean Percentage Occupancy levels										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select(`20a. What was your Occupancy level for Jan 2021`:`20c. What was your Occupancy level for Mar 2021`) %>% reshape2::melt() %>% mutate(Month = case_when(str_detect(variable, 'Jan')~ 'Jan', str_detect(variable, 'Feb')~ 'Feb', str_detect(variable, 'Mar')~ 'Mar', )) %>% mutate(Month = factor(Month, levels = month.abb)) %>% group_by(Month) %>% summarise(Mean_occupancy =round(mean(value, na.rm = T))) %>% rbind(covdata %>% select(`20a. What was your Occupancy level for Jan 2021`:`20c. What was your Occupancy level for Mar 2021`) %>% reshape2::melt() %>% mutate(Month = case_when(str_detect(variable, 'Jan')~ 'Jan', str_detect(variable, 'Feb')~ 'Feb', str_detect(variable, 'Mar')~ 'Mar', )) %>% mutate(Month = 'Average') %>% group_by(Month) %>% summarise(Mean_occupancy =round(mean(value, na.rm = T))))  %>% kable()
+```
+
+Table 18: Occupancy levels by Hotel										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select(`20a. What was your Occupancy level for Jan 2021`:`20c. What was your Occupancy level for Mar 2021`, Business_name = `1. What is the Company/Organisation/Business name?`) %>% left_join(covdata %>% select(`20a. What was your Occupancy level for Jan 2021`:`20c. What was your Occupancy level for Mar 2021`, Business_name = `1. What is the Company/Organisation/Business name?`) %>% mutate(Average =round(rowMeans(select(., `20a. What was your Occupancy level for Jan 2021`:`20c. What was your Occupancy level for Mar 2021`), na.rm = T)))) %>% select(Business_name, everything()) %>% kable()
+```
+
+Table 19: Room Cancellations and losses										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select(Business_name = `1. What is the Company/Organisation/Business name?`, `24a. How many room cancellations have you had in the last one year`, `24b. How much have you lost in revenues due to room cancellations in Uganda Shillings in the last one year`)%>% filter(!is.na(`24a. How many room cancellations have you had in the last one year`) & !is.na(`24b. How much have you lost in revenues due to room cancellations in Uganda Shillings in the last one year`)) %>% bind_rows(
+covdata %>% select(Business_name = `1. What is the Company/Organisation/Business name?`, `24a. How many room cancellations have you had in the last one year`, `24b. How much have you lost in revenues due to room cancellations in Uganda Shillings in the last one year`) %>% melt(id = 'Business_name') %>% group_by(variable) %>% summarise(value = mean(value, na.rm = T)) %>% pivot_wider(names_from = 'variable', values_from ='value' ) %>% mutate(Business_name = 'Average')) %>% mutate_if(is.numeric, round)  %>%  kable()
+```
+
+Table 19: Room Cancellations and losses	by business type:
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+
+covdata %>% select(Business_type = `2. Type of Business`, `24a. How many room cancellations have you had in the last one year`, `24b. How much have you lost in revenues due to room cancellations in Uganda Shillings in the last one year`)%>% filter(!is.na(`24a. How many room cancellations have you had in the last one year`) & !is.na(`24b. How much have you lost in revenues due to room cancellations in Uganda Shillings in the last one year`)) %>% melt(id = 'Business_type') %>% group_by(Business_type, variable) %>% summarise(value = mean(value, na.rm = T)) %>% pivot_wider(names_from = 'variable', values_from ='value' ) %>% bind_rows(
+covdata %>% select(Business_type = `2. Type of Business`, `24a. How many room cancellations have you had in the last one year`, `24b. How much have you lost in revenues due to room cancellations in Uganda Shillings in the last one year`)%>% filter(!is.na(`24a. How many room cancellations have you had in the last one year`) & !is.na(`24b. How much have you lost in revenues due to room cancellations in Uganda Shillings in the last one year`)) %>% melt(id = 'Business_type') %>% group_by(variable) %>% summarise(value = mean(value, na.rm = T)) %>% pivot_wider(names_from = 'variable', values_from ='value' ) %>% mutate(Business_type = 'Average'))%>% mutate_if(is.numeric, round)%>%  kable()
+```
+
+Table 19: Room Cancellations and losses	by business age:
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata%>% mutate(`7. How do you rate your business performance in the last 12 months?` = factor(`7. How do you rate your business performance in the last 12 months?`, levels = c('Poor', 'Fair', 'Good')), `4. Years in Business of the Company` = factor(`4. Years in Business of the Company`, levels = c('0-3years', '4-6 years', '7-9 years', '10-12 years', '13-15 years', '15+ years'))) %>% select(Business_years = `4. Years in Business of the Company`, `24a. How many room cancellations have you had in the last one year`, `24b. How much have you lost in revenues due to room cancellations in Uganda Shillings in the last one year`)%>% filter(!is.na(`24a. How many room cancellations have you had in the last one year`) & !is.na(`24b. How much have you lost in revenues due to room cancellations in Uganda Shillings in the last one year`)) %>% melt(id = 'Business_years') %>% group_by(Business_years, variable) %>% summarise(value = mean(value, na.rm = T)) %>% pivot_wider(names_from = 'variable', values_from ='value' ) %>% bind_rows(
+covdata %>% select(Business_years = `4. Years in Business of the Company`, `24a. How many room cancellations have you had in the last one year`, `24b. How much have you lost in revenues due to room cancellations in Uganda Shillings in the last one year`)%>% filter(!is.na(`24a. How many room cancellations have you had in the last one year`) & !is.na(`24b. How much have you lost in revenues due to room cancellations in Uganda Shillings in the last one year`)) %>% melt(id = 'Business_years') %>% group_by(variable) %>% summarise(value = mean(value, na.rm = T)) %>% pivot_wider(names_from = 'variable', values_from ='value' ) %>% mutate(Business_years = 'Average'))%>% mutate_if(is.numeric, round)%>%  kable()
+```
+
+Booking Patterns										
+Table 20: Number of Bookings by tourist type										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select(`2. Type of Business`, `10a1. How many bookings of Foreign tourists did you make during the Periods Jul-Aug 2020;`:`10d4. How many bookings did you make during the Periods Jan-Mar 2021=${bookings_janmar}`) %>%melt(id = "2. Type of Business") %>% mutate(Period = case_when(str_detect(variable, "Jul-Aug 2020")~"Jul-Aug 2020",str_detect(variable, "Sep-Oct 2020")~"Sep-Oct 2020", str_detect(variable, "Nov-Dec 2020")~"Nov-Dec 2020", str_detect(variable, "Jan-Mar 2021")~"Jan-Mar 2021",), Tourist = case_when(str_detect(variable, 'Foreign')~'Foreign tourists', str_detect(variable, 'Domestic')~'Domestic tourists', )) %>% mutate(value = as.numeric(value),Period = factor(Period, levels = c( "Jul-Aug 2020","Sep-Oct 2020",  "Nov-Dec 2020", "Jan-Mar 2021" )) ) %>% group_by(Tourist, Period) %>% summarise(N=  sum(value, na.rm = T)) %>% drop_na(Tourist) %>% pivot_wider(names_from = 'Period', values_from = 'N')
+```
+
+Table 21: Number of Bookings by Business Type:
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select( `2. Type of Business`, `10a1. How many bookings of Foreign tourists did you make during the Periods Jul-Aug 2020;`:`10d4. How many bookings did you make during the Periods Jan-Mar 2021=${bookings_janmar}`) %>%melt(id = "2. Type of Business") %>% mutate(Period = case_when(str_detect(variable, "Jul-Aug 2020")~"Jul-Aug 2020",str_detect(variable, "Sep-Oct 2020")~"Sep-Oct 2020", str_detect(variable, "Nov-Dec 2020")~"Nov-Dec 2020", str_detect(variable, "Jan-Mar 2021")~"Jan-Mar 2021",), Tourist = case_when(str_detect(variable, 'Foreign')~'Foreign tourists', str_detect(variable, 'Domestic')~'Domestic tourists', )) %>% mutate(value = as.numeric(value),Period = factor(Period, levels = c( "Jul-Aug 2020","Sep-Oct 2020",  "Nov-Dec 2020", "Jan-Mar 2021" )) ) %>% drop_na(value) %>% group_by( `2. Type of Business`, Period) %>% summarise(N=  sum(value, na.rm = T)) %>% drop_na( `2. Type of Business`) %>% pivot_wider(names_from = 'Period', values_from = 'N')
+```
+
+Table 22: Number of Foreign Bookings by Business Type										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select( `2. Type of Business`, `10a1. How many bookings of Foreign tourists did you make during the Periods Jul-Aug 2020;`:`10d4. How many bookings did you make during the Periods Jan-Mar 2021=${bookings_janmar}`) %>%melt(id = "2. Type of Business") %>% mutate(Period = case_when(str_detect(variable, "Jul-Aug 2020")~"Jul-Aug 2020",str_detect(variable, "Sep-Oct 2020")~"Sep-Oct 2020", str_detect(variable, "Nov-Dec 2020")~"Nov-Dec 2020", str_detect(variable, "Jan-Mar 2021")~"Jan-Mar 2021",), Tourist = case_when(str_detect(variable, 'Foreign')~'Foreign tourists', str_detect(variable, 'Domestic')~'Domestic tourists', )) %>% mutate(value = as.numeric(value),Period = factor(Period, levels = c( "Jul-Aug 2020","Sep-Oct 2020",  "Nov-Dec 2020", "Jan-Mar 2021" ))) %>% drop_na(value)%>% filter(Tourist == "Foreign tourists") %>% group_by( `2. Type of Business`, Period) %>% summarise(N=  sum(value, na.rm = T)) %>% drop_na( `2. Type of Business`) %>% pivot_wider(names_from = 'Period', values_from = 'N')
+```
+
+Table 23: Number of Domestic Bookings by Business Type
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select( `2. Type of Business`, `10a1. How many bookings of Foreign tourists did you make during the Periods Jul-Aug 2020;`:`10d4. How many bookings did you make during the Periods Jan-Mar 2021=${bookings_janmar}`) %>%melt(id = "2. Type of Business") %>% mutate(Period = case_when(str_detect(variable, "Jul-Aug 2020")~"Jul-Aug 2020",str_detect(variable, "Sep-Oct 2020")~"Sep-Oct 2020", str_detect(variable, "Nov-Dec 2020")~"Nov-Dec 2020", str_detect(variable, "Jan-Mar 2021")~"Jan-Mar 2021",), Tourist = case_when(str_detect(variable, 'Foreign')~'Foreign tourists', str_detect(variable, 'Domestic')~'Domestic tourists', )) %>% mutate(value = as.numeric(value),Period = factor(Period, levels = c( "Jul-Aug 2020","Sep-Oct 2020",  "Nov-Dec 2020", "Jan-Mar 2021" ))) %>% drop_na(value) %>% filter(Tourist == "Domestic tourists") %>% group_by( `2. Type of Business`, Period) %>% summarise(N=  sum(value, na.rm = T)) %>% drop_na( `2. Type of Business`) %>% pivot_wider(names_from = 'Period', values_from = 'N')
+```
+
+Table 24: Average Bookings by Business type										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select( `2. Type of Business`, `10a1. How many bookings of Foreign tourists did you make during the Periods Jul-Aug 2020;`:`10d4. How many bookings did you make during the Periods Jan-Mar 2021=${bookings_janmar}`) %>%melt(id = "2. Type of Business") %>% mutate(Period = case_when(str_detect(variable, "Jul-Aug 2020")~"Jul-Aug 2020",str_detect(variable, "Sep-Oct 2020")~"Sep-Oct 2020", str_detect(variable, "Nov-Dec 2020")~"Nov-Dec 2020", str_detect(variable, "Jan-Mar 2021")~"Jan-Mar 2021",), Tourist = case_when(str_detect(variable, 'Foreign')~'Foreign tourists', str_detect(variable, 'Domestic')~'Domestic tourists', )) %>% mutate(value = as.numeric(value),Period = factor(Period, levels = c( "Jul-Aug 2020","Sep-Oct 2020",  "Nov-Dec 2020", "Jan-Mar 2021" ))) %>% drop_na(value) %>% group_by( `2. Type of Business`, Period) %>% summarise(N= round(mean(value, na.rm = T))) %>% drop_na( `2. Type of Business`) %>% pivot_wider(names_from = 'Period', values_from = 'N')
+```
+
+Table 25: Experiencing Cancellations of Bookings:
+**This section had NAs that i filtered out. Thats why the total is less than the number of surveys conducted**
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% drop_na(`11. Have you had any cancellations of bookings in the last 12 months?`) %>% group_by(`11. Have you had any cancellations of bookings in the last 12 months?`)  %>% summarise(Count = n()) %>% mutate(Per = paste0(round(Count/sum(Count)*100), '%')) %>% adorn_totals(where = 'row')  %>% kable()
+```
+
+Table 26: Number and average cancellations and Loss in revenues by business type										
+Averages:
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+
+covdata %>% select(Business_type = `2. Type of Business`, `12. How many bookings have been cancelled in the last 12 months?`, `13. How much is the estimated loss due to cancellations in terms of revenues in the last 12 months? Please provide response UGShs`)%>% filter(!is.na(`12. How many bookings have been cancelled in the last 12 months?`) & !is.na(`13. How much is the estimated loss due to cancellations in terms of revenues in the last 12 months? Please provide response UGShs`)) %>% melt(id = 'Business_type') %>% group_by(Business_type, variable) %>% summarise(value = mean(value, na.rm = T)) %>% pivot_wider(names_from = 'variable', values_from ='value' ) %>% bind_rows(covdata %>% select(Business_type = `2. Type of Business`, `12. How many bookings have been cancelled in the last 12 months?`, `13. How much is the estimated loss due to cancellations in terms of revenues in the last 12 months? Please provide response UGShs`)%>% filter(!is.na(`12. How many bookings have been cancelled in the last 12 months?`) & !is.na(`13. How much is the estimated loss due to cancellations in terms of revenues in the last 12 months? Please provide response UGShs`)) %>% melt(id = 'Business_type') %>% group_by(variable) %>% summarise(value = mean(value, na.rm = T)) %>% pivot_wider(names_from = 'variable', values_from ='value' ) %>% mutate(Business_type = 'Average'))%>% mutate_if(is.numeric, round)%>%  kable()
+```
+
+Totals/Summations
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+
+covdata %>% select(Business_type = `2. Type of Business`, `12. How many bookings have been cancelled in the last 12 months?`, `13. How much is the estimated loss due to cancellations in terms of revenues in the last 12 months? Please provide response UGShs`)%>% filter(!is.na(`12. How many bookings have been cancelled in the last 12 months?`) & !is.na(`13. How much is the estimated loss due to cancellations in terms of revenues in the last 12 months? Please provide response UGShs`)) %>% melt(id = 'Business_type') %>% group_by(Business_type, variable) %>% summarise(value = sum(value, na.rm = T)) %>% pivot_wider(names_from = 'variable', values_from ='value' ) %>% bind_rows(covdata %>% select(Business_type = `2. Type of Business`, `12. How many bookings have been cancelled in the last 12 months?`, `13. How much is the estimated loss due to cancellations in terms of revenues in the last 12 months? Please provide response UGShs`)%>% filter(!is.na(`12. How many bookings have been cancelled in the last 12 months?`) & !is.na(`13. How much is the estimated loss due to cancellations in terms of revenues in the last 12 months? Please provide response UGShs`)) %>% melt(id = 'Business_type') %>% group_by(variable) %>% summarise(value = sum(value, na.rm = T)) %>% pivot_wider(names_from = 'variable', values_from ='value' ) %>% mutate(Business_type = 'Average'))%>% mutate_if(is.numeric, round)%>%  kable()
+```
+
+Table 27: Reasons for Cancellation of Bookings	
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+
+covdata %>% select(`14. What are some of the reasons for cancellation of bookings? (tick the relevant boxes)/Hesitancy to travel`:`14. What are some of the reasons for cancellation of bookings? (tick the relevant boxes)/Others (Specify)`) %>% melt() %>% mutate(Reason = case_when(str_detect(variable, "Hesitancy to travel")~"Hesitancy to travel", str_detect(variable, "Travel restrictions")~"Travel restrictions", str_detect(variable, "Lockdown")~"Lockdown that being imposed", str_detect(variable, "money")~"No money for travel",)) %>% drop_na(Reason) %>% group_by(Reason) %>% summarise(Count = sum(value, na.rm = T)) %>% mutate(per = paste0(round(Count/sum(Count)*100), '%'))%>%  kable()
+
+
+```
+
+Other reasons:
+
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+library(tidytext)
+library(wordcloud)
+library(RColorBrewer)
+
+effect<-  covdata %>% select(value = `14a. Other (Specify)`) 
+effect %>% select(value) %>% mutate(bigram = str_to_lower(value))  %>%unnest_tokens(word, value, token = 'ngrams', n = 1) %>% filter(!word %in% stop_words$word) %>% count(word, sort = T) %>% drop_na(word) -> nn
+
+pal <- brewer.pal(8,"Dark2")
+wordcloud(nn$word, nn$n, scale=c(8,.2),min.freq=2, max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal)
+```
+
+MICE-Meetings, Incentives, Conferences and Events										
+Table 28: Volumes of Conferences held in the last one year
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+
+covdata %>% select(Company = `1. What is the Company/Organisation/Business name?`, Conferences_held =  `22. How many conferences did you hold in the last one year`,Average_attendance = `23. How many participants on average attended each of the conferences in the last one year`) %>% mutate(Estimate = Conferences_held * Average_attendance, Average_attendance = as.integer(Average_attendance)) %>% filter( !(is.na(Conferences_held) & is.na(Average_attendance)) ) %>% arrange(Company)%>%  kable()
+
+```
+
+Table 29: Hosting of Conferences:
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% group_by(Response = `21. Did you host any conferences in the last one year`) %>% drop_na(`21. Did you host any conferences in the last one year`) %>% summarise(count = n()) %>% mutate(`Percent (%)` =paste0(round(count/sum(count)*100), "%"))%>%  kable()
+
+```
+
+
