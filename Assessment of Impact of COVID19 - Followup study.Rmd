@@ -237,4 +237,5 @@ covdata %>% group_by(Response = `21. Did you host any conferences in the last on
 
 Derrick start your work from here:
 Testing
+$ git config --global user.email "you@example.com"
 
