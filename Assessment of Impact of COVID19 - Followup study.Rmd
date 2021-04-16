@@ -242,8 +242,60 @@ covdata %>% group_by(Response=`15. Have you had a decline or increase in your sa
 
 Table 31: Lost income in the last one year
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
-covdata %>% group_by(Response=`27.what is the level of income lost over the last one year`) %>% drop_na(`27.what is the level of income lost over the last one year `) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% kable()
+covdata %>% select(`27. What is the level of income lost over the last one year/Less than 25% of income lost`:`27. What is the level of income lost over the last one year/No income lost`) %>% melt() %>% mutate(Response = case_when(str_detect(variable, "Less than 25% of income lost
+")~"Less than 25% of income lost", str_detect(variable, "Less than 50% of income lost")~"Less than 50% of income lost", str_detect(variable, "Over 50% of income lost")~"Over 50% of income lost", str_detect(variable, "No income lost")~"No income lost",)) %>% drop_na(Response) %>% group_by(Response) %>% summarise(Count = sum(value, na.rm = T)) %>% mutate(per = paste0(round(Count/sum(Count)*100), '%'))%>%  kable()
 ```
+
+Table 32: View of the Business Prospects for 2021
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% group_by(Business_prospects=`28. How do you see the business prospects for the year 2021`) %>% drop_na(`28. How do you see the business prospects for the year 2021`) %>% summarise(count=n())%>% mutate(`percent(%)`= paste0(round(count/sum(count)*100),"%")) %>% kable()
+```
+
+Table 33: View of the Business Prospects for 2021 by Business Type
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+library(gmodels)
+covdata %>%  CrossTable(`28. How do you see the business prospects for the year 2021`,`2. Type of Business`) %>% summarise(count=n()) %>% summarise(sum=n()) %>% kable()
+```
+
+Table 34: View of the Business Prospects for 2021 by Business Type
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select(`29. What Stimulus package would you wish government to provide to the Tourism industry to help in recovery and boost tourism?`:`29. What Stimulus package would you wish government to provide to the Tourism industry to help in recovery and boost tourism?/Others (Specify)`) %>% melt() %>% mutate(Stimulus_package = case_when(str_detect(variable, "Provide Loan Grace period to Tourism Business")~"Provide Loan Grace period to Tourism Business", str_detect(variable, "Provide lower interest rates")~"Provide lower interest rates", str_detect(variable, "Tax reductions or deferments")~"Tax reductions or deferments", str_detect(variable, "Intensify marketing and promotion of Domestic Tourism to support Tourism business
+")~"Intensify marketing and promotion of Domestic Tourism to support Tourism business
+",str_detect(variable, "Financial support for cash flow and recovery")~"Financial support for cash flow and recovery",str_detect(variable, "Expert advice on business strategy and recovery")~"Expert advice on business strategy and recovery",str_detect(variable, "Virtual training for upskilling entrepreneurs and staff")~"Virtual training for upskilling entrepreneurs and staff",str_detect(variable, "Commercial debt repayment support")~"Commercial debt repayment support",str_detect(variable, "Others")~"Others")) %>% drop_na(Stimulus_package) %>% group_by(Stimulus_package) %>% summarise(Count = sum(value, na.rm = T)) %>% mutate(per = paste0(round(Count/sum(Count)*100), '%'))%>%  kable()
+```
+
+Table 35: Number of Flights per year 
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+
+covdata %>% select(`8a. State the number of flights made per week in 2019 for your Airline?`:`8c. State the number of flights made per week in 2021 for your Airline?`) %>% melt() %>% mutate(flight = case_when(str_detect(variable, "Number of flights per week in 2019")~"Number of flights per week in 2019",str_detect(variable, "Number of flights per week in 2020")~"Number of flights per week in 2020", str_detect(variable, "Number of flights per week in 2021")~"Number of flights per week in 2021" )) %>% drop_na(Stimulus_package) %>% group_by(Stimulus_package) %>% summarise(Count = sum(value, na.rm = T)) %>% mutate(per = paste0(round(Count/sum(Count)*100), '%'))%>%  kable()
+```
+
+Table 36: Number of Flights per year by Airline
+
+Table 37: Have you grounded any of your fleet of Aero planes
+
+Table 38: Souvenir and Handicraft Sales
+
+Table 39: Souvenir and Handicraft Sales
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select()
+```
+
+Table 40: Can Tourism in Uganda survive without International Tourists inflows
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% group_by(Response = `30a. Can Tourism survive without International Tourists inflows?`) %>% drop_na(`30a. Can Tourism survive without International Tourists inflows?`) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% kable()
+```
+
+Table 41: Suggestions to develop the domestic tourism industry
+
+Table 42: Do you think there has been growth in Domestic Tourism over the last one year
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% group_by(Response = `30c. Do you think there has been growth in Domestic Tourism over the last one year?`) %>% drop_na(`30c. Do you think there has been growth in Domestic Tourism over the last one year?`) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% kable()
+```
+
+Table 43: Barriers to growth in Domestic Tourism in 2020
+
+Table 44: Factors that have led to growth of Domestic Tourism in 2020
 
 
 Derrick start your work from here:
