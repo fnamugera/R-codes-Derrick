@@ -237,7 +237,7 @@ covdata %>% group_by(Response = `21. Did you host any conferences in the last on
 
 Table 30: Receipt of change in income
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
-covdata %>% group_by(`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% drop_na(`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% kable()
+covdata %>% group_by(Response=`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% drop_na(`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% kable()
 ```
 
 Derrick start your work from here:
