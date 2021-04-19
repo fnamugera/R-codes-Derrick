@@ -297,9 +297,3 @@ Table 43: Barriers to growth in Domestic Tourism in 2020
 
 Table 44: Factors that have led to growth of Domestic Tourism in 2020
 
-
-Derrick start your work from here:
-Testing
-$ git config --global user.email "you@example.com"
-
-muwonge
