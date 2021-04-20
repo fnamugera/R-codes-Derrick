@@ -337,7 +337,7 @@ pal <- brewer.pal(8,"Dark2")
 wordcloud(nn$word, nn$n, scale=c(8,.2),min.freq=2, max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal)
 ```
 
-Table 42: Do you think there has been growth in Domestic Tourism over the last one year
+Table 42: Do you think there has been growth in Domestic Tourism over the last one year 
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
 covdata %>% group_by(Response = `30c. Do you think there has been growth in Domestic Tourism over the last one year?`) %>% drop_na(`30c. Do you think there has been growth in Domestic Tourism over the last one year?`) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% adorn_totals(where = 'row') %>% kable()
 ```
