@@ -362,4 +362,4 @@ pal <- brewer.pal(8,"Dark2")
 wordcloud(nn$word, nn$n, scale=c(8,.2),min.freq=2, max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal)
 ```
 
- <a href="#top">Back to top</a> 
+ <a href="#top">Back to top</a>
