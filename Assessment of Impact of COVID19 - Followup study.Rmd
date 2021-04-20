@@ -20,8 +20,8 @@ library(readxl)
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
 
-#covdata<- readxl::read_xlsx("D:/Learnings/work/OJ/COVID19 Impact study/Study_on_the_Impact_of_COVID-19_on_the_Tourism_Industry_in_Uganda_in_the_last_one_year_March_2020-March_2021_-_all_versions_-_labels_-_2021-04-09-15-19-13.xlsx", sheet = 'Study on the Impact of COVID...')
-covdata<-readRDS("C:/Users/Derrick pc/Desktop/covid/R-codes-Derrick/covdata.RDS")
+covdata<- readxl::read_xlsx("D:/Learnings/work/OJ/COVID19 Impact study/Study_on_the_Impact_of_COVID-19_on_the_Tourism_Industry_in_Uganda_in_the_last_one_year_March_2020-March_2021_-_all_versions_-_labels_-_2021-04-09-15-19-13.xlsx", sheet = 'Study on the Impact of COVID...')
+#covdata<-readRDS("C:/Users/Derrick pc/Desktop/covid/R-codes-Derrick/covdata.RDS")
 ```
 
 ### Details of the Tourism Establishments
@@ -222,78 +222,144 @@ wordcloud(nn$word, nn$n, scale=c(8,.2),min.freq=2, max.words=Inf, random.order=F
 ```
 
 MICE-Meetings, Incentives, Conferences and Events										
-Table 28: Volumes of Conferences held in the last one year
+Table 28: Volumes of Conferences held in the last one year. There are some outlier in this data set. These need to be question.
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+options(scipen=999)
+covdata %>% select(Company = `1. What is the Company/Organisation/Business name?`, Conferences_held =  `22. How many conferences did you hold in the last one year`,Average_attendance = `23. How many participants on average attended each of the conferences in the last one year`) %>% mutate(Estimate = Conferences_held * Average_attendance, Average_attendance = as.numeric(Average_attendance)) %>% filter( !(is.na(Conferences_held) & is.na(Average_attendance)) ) %>% arrange(Company)%>%  kable()
+```
+
+Outliers: The data need to be cleaned for these since they appear to be out of the norm.
+
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+options(scipen=999)
+covdata %>% select(Company = `1. What is the Company/Organisation/Business name?`, Conferences_held =  `22. How many conferences did you hold in the last one year`,Average_attendance = `23. How many participants on average attended each of the conferences in the last one year`) %>% mutate(Estimate = Conferences_held * Average_attendance, Average_attendance = as.numeric(Average_attendance)) %>% filter( !(is.na(Conferences_held) & is.na(Average_attendance)) ) %>% arrange(desc(Average_attendance)) %>% top_n(n = 8)%>%  kable()
+```
+
+Using averages: (I have removed the outliers above)
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
 
-covdata %>% select(Company = `1. What is the Company/Organisation/Business name?`, Conferences_held =  `22. How many conferences did you hold in the last one year`,Average_attendance = `23. How many participants on average attended each of the conferences in the last one year`) %>% mutate(Estimate = Conferences_held * Average_attendance, Average_attendance = as.integer(Average_attendance)) %>% filter( !(is.na(Conferences_held) & is.na(Average_attendance)) ) %>% arrange(Company)%>%  kable()
+covdata %>% select(Conferences_held =  `22. How many conferences did you hold in the last one year`,Average_attendance = `23. How many participants on average attended each of the conferences in the last one year`) %>% filter(Average_attendance<4000000) %>% melt() %>% group_by(variable) %>% summarise(Average = mean(value, na.rm = T)) %>%  kable()
 
 ```
 
 Table 29: Hosting of Conferences:
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
-covdata %>% group_by(Response = `21. Did you host any conferences in the last one year`) %>% drop_na(`21. Did you host any conferences in the last one year`) %>% summarise(count = n()) %>% mutate(`Percent (%)` =paste0(round(count/sum(count)*100), "%"))%>%  kable()
+covdata %>% group_by(Response = `21. Did you host any conferences in the last one year`) %>% drop_na(`21. Did you host any conferences in the last one year`) %>% summarise(count = n()) %>% mutate(`Percent (%)` =paste0(round(count/sum(count)*100), "%")) %>% adorn_totals(where = 'row')%>%  kable()
 
 ```
 
-Table 30: Receipt of change in income
+Incomes in 2020						
+Table 30: Receipt of change in income.
+The average is influenced by outliers. I have therefore dropped any record below 10000. This only drops one record.
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
-covdata %>% group_by(Response=`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% drop_na(`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% kable()
+covdata %>% select(`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`, `16. If your answer is increase or declines, How much is the estimated loss/increase you have got for the last one year in Uganda Shillings due to COVID-19`)  %>% drop_na(`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% filter(`16. If your answer is increase or declines, How much is the estimated loss/increase you have got for the last one year in Uganda Shillings due to COVID-19`>1000) %>% group_by(Response=`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% summarise(Count = n(), Average_change = mean(`16. If your answer is increase or declines, How much is the estimated loss/increase you have got for the last one year in Uganda Shillings due to COVID-19`)) %>% mutate(`percent(%)`=paste0(round(Count/sum(Count)*100),"%")) %>% kable()
+```
+
+By business type {#test}
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select(`2. Type of Business`, `15. Have you had a decline or increase in your sales in the last 12 months compared to before?`, `16. If your answer is increase or declines, How much is the estimated loss/increase you have got for the last one year in Uganda Shillings due to COVID-19`)  %>% drop_na(`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% filter(`16. If your answer is increase or declines, How much is the estimated loss/increase you have got for the last one year in Uganda Shillings due to COVID-19`>1000) %>% group_by(`2. Type of Business`, Response=`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% summarise(Count = n(), Average_change = mean(`16. If your answer is increase or declines, How much is the estimated loss/increase you have got for the last one year in Uganda Shillings due to COVID-19`)) %>% ungroup() %>%  mutate(`percent(%)`=paste0(round(Count/sum(Count)*100),"%")) %>% kable()
+```
+
+Outlier record from the previous table:
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% select(`1. What is the Company/Organisation/Business name?`, `2. Type of Business`, `15. Have you had a decline or increase in your sales in the last 12 months compared to before?`, `16. If your answer is increase or declines, How much is the estimated loss/increase you have got for the last one year in Uganda Shillings due to COVID-19`)  %>% drop_na(`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% filter(`16. If your answer is increase or declines, How much is the estimated loss/increase you have got for the last one year in Uganda Shillings due to COVID-19`<1000)%>% kable()
 ```
 
 Table 31: Lost income in the last one year
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
-covdata %>% select(`27. What is the level of income lost over the last one year/Less than 25% of income lost`:`27. What is the level of income lost over the last one year/No income lost`) %>% melt() %>% mutate(Response = case_when(str_detect(variable, "Less than 25% of income lost
-")~"Less than 25% of income lost", str_detect(variable, "Less than 50% of income lost")~"Less than 50% of income lost", str_detect(variable, "Over 50% of income lost")~"Over 50% of income lost", str_detect(variable, "No income lost")~"No income lost",)) %>% drop_na(Response) %>% group_by(Response) %>% summarise(Count = sum(value, na.rm = T)) %>% mutate(per = paste0(round(Count/sum(Count)*100), '%'))%>%  kable()
+covdata %>% select(`27. What is the level of income lost over the last one year/Less than 25% of income lost`:`27. What is the level of income lost over the last one year/No income lost`) %>% melt() %>% mutate(Response = case_when(str_detect(variable, "Less than 25% of income lost") ~"Less than 25% of income lost", str_detect(variable, "Less than 50% of income lost")~"Less than 50% of income lost", str_detect(variable, "Over 50% of income lost")~"Over 50% of income lost", str_detect(variable, "100% of income lost")~ '100% of income lost', str_detect(variable, "No income lost")~"No income lost",)) %>% mutate(Response, factor(Response, levels = c('No income lost', "Less than 25% of income lost", "Less than 50% of income lost", "Over 50% of income lost","100% of income lost")))  %>% group_by(Response) %>% summarise(Count = sum(value, na.rm = T)) %>% mutate(per = paste0(round(Count/sum(Count)*100), '%')) %>% arrange(Response) %>%  kable()
 ```
 
+Business prospects for 2021 and Stimulus Package required						
 Table 32: View of the Business Prospects for 2021
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
-covdata %>% group_by(Business_prospects=`28. How do you see the business prospects for the year 2021`) %>% drop_na(`28. How do you see the business prospects for the year 2021`) %>% summarise(count=n())%>% mutate(`percent(%)`= paste0(round(count/sum(count)*100),"%")) %>% kable()
+covdata %>% select(Business_prospects=`28. How do you see the business prospects for the year 2021`) %>% drop_na(Business_prospects) %>% mutate(Business_prospects = factor(Business_prospects, levels = c('Worse', 'Bad', 'Fair', 'Good', 'Very Good'))) %>% group_by(Business_prospects) %>% summarise(count=n())%>% mutate(`percent(%)`= paste0(round(count/sum(count)*100),"%")) %>% adorn_totals(where = 'row') %>% kable()
 ```
 
 Table 33: View of the Business Prospects for 2021 by Business Type
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
-library(gmodels)
-covdata %>%  CrossTable(`28. How do you see the business prospects for the year 2021`,`2. Type of Business`) %>% summarise(count=n()) %>% summarise(sum=n()) %>% kable()
+covdata %>% select(Business_prospects=`28. How do you see the business prospects for the year 2021`,`Type of Business` = `2. Type of Business`) %>% drop_na(Business_prospects) %>% mutate(Business_prospects = factor(Business_prospects, levels = c('Worse', 'Bad', 'Fair', 'Good', 'Very Good'))) %>% group_by(Business_prospects, `Type of Business`) %>% summarise(count=n()) %>% pivot_wider(values_from = count, names_from = Business_prospects)  %>% adorn_totals(where =c('row', 'col')) %>% mutate_if(is.numeric, replace_na, "") %>% kable()
 ```
 
 Table 34: View of the Business Prospects for 2021 by Business Type
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
-covdata %>% select(`29. What Stimulus package would you wish government to provide to the Tourism industry to help in recovery and boost tourism?`:`29. What Stimulus package would you wish government to provide to the Tourism industry to help in recovery and boost tourism?/Others (Specify)`) %>% melt() %>% mutate(Stimulus_package = case_when(str_detect(variable, "Provide Loan Grace period to Tourism Business")~"Provide Loan Grace period to Tourism Business", str_detect(variable, "Provide lower interest rates")~"Provide lower interest rates", str_detect(variable, "Tax reductions or deferments")~"Tax reductions or deferments", str_detect(variable, "Intensify marketing and promotion of Domestic Tourism to support Tourism business
-")~"Intensify marketing and promotion of Domestic Tourism to support Tourism business
-",str_detect(variable, "Financial support for cash flow and recovery")~"Financial support for cash flow and recovery",str_detect(variable, "Expert advice on business strategy and recovery")~"Expert advice on business strategy and recovery",str_detect(variable, "Virtual training for upskilling entrepreneurs and staff")~"Virtual training for upskilling entrepreneurs and staff",str_detect(variable, "Commercial debt repayment support")~"Commercial debt repayment support",str_detect(variable, "Others")~"Others")) %>% drop_na(Stimulus_package) %>% group_by(Stimulus_package) %>% summarise(Count = sum(value, na.rm = T)) %>% mutate(per = paste0(round(Count/sum(Count)*100), '%'))%>%  kable()
+covdata %>% select(`29. What Stimulus package would you wish government to provide to the Tourism industry to help in recovery and boost tourism?/Provide Loan Grace Period to Tourism Business`:`29. What Stimulus package would you wish government to provide to the Tourism industry to help in recovery and boost tourism?/Others (Specify)`) %>% melt() %>% mutate(Stimulus_package = case_when(
+str_detect(variable, "Provide Loan Grace period to Tourism Business")~"Provide Loan Grace period to Tourism Business", str_detect(variable, "Provide lower interest rates")~"Provide lower interest rates", 
+str_detect(variable, "Tax reductions or deferments")~"Tax reductions or deferments", 
+str_detect(variable, "Intensify marketing and promotion of Domestic Tourism to support Tourism business")~"Intensify marketing and promotion of Domestic Tourism to support Tourism business",
+str_detect(variable, "Financial support for cash flow and recovery")~"Financial support for cash flow and recovery",
+str_detect(variable, "Expert advice on business strategy and recovery")~"Expert advice on business strategy and recovery",
+str_detect(variable, "Virtual training for upskilling entrepreneurs and staff")~"Virtual training for upskilling entrepreneurs and staff",
+str_detect(variable, "Commercial debt repayment support")~"Commercial debt repayment support",
+str_detect(variable, "Others (Specify)")~"Others",)) %>% drop_na(Stimulus_package) %>% group_by(Stimulus_package) %>% summarise(Count = sum(value, na.rm = T)) %>% mutate(per = paste0(round(Count/sum(Count)*100), '%'))%>%  kable()
 ```
 
-Table 35: Number of Flights per year 
+Airlines and Flights						
+Table 35: Number of Flights per year: This question was captured wrongly. It was captured as a boolean data type and not numeric. Hence the table summarises yes/no responses.
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
 
-covdata %>% select(`8a. State the number of flights made per week in 2019 for your Airline?`:`8c. State the number of flights made per week in 2021 for your Airline?`) %>% melt() %>% mutate(flight = case_when(str_detect(variable, "Number of flights per week in 2019")~"Number of flights per week in 2019",str_detect(variable, "Number of flights per week in 2020")~"Number of flights per week in 2020", str_detect(variable, "Number of flights per week in 2021")~"Number of flights per week in 2021" )) %>% drop_na(Stimulus_package) %>% group_by(Stimulus_package) %>% summarise(Count = sum(value, na.rm = T)) %>% mutate(per = paste0(round(Count/sum(Count)*100), '%'))%>%  kable()
+covdata %>% select(`2. Type of Business`, `8a. State the number of flights made per week in 2019 for your Airline?`:`8c. State the number of flights made per week in 2021 for your Airline?`) %>% melt(id = '2. Type of Business') %>% select(-`2. Type of Business`) %>% mutate(Flight = case_when(str_detect(variable, "2019 for your Airline")~"Number of flights per week in 2019",str_detect(variable, "2020 for your Airline")~"Number of flights per week in 2020", str_detect(variable, "2021 for your Airline")~"Number of flights per week in 2021" ), ) %>% drop_na(Flight) %>% group_by(Flight) %>% summarise(Count = sum(value, na.rm = T)) %>% mutate(per = paste0(round(Count/sum(Count)*100), '%'))%>%  kable()
 ```
 
-Table 36: Number of Flights per year by Airline
+Table 36: Number of Flights per year by Airline:
+This question was not for each flight company.
 
-Table 37: Have you grounded any of your fleet of Aero planes
 
+Table 37: Have you grounded any of your fleet of Aero planes.
+This question was also not captured by the questionnaire.
+
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+covdata %>% drop_na(`9. Have you grounded any of your fleet of Aero planes? (for Airlines only)`) %>% group_by(`9. Have you grounded any of your fleet of Aero planes? (for Airlines only)`) %>% summarise(N = n())
+```
+
+Sales of Souvenirs and Handicrafts						
 Table 38: Souvenir and Handicraft Sales
+Similar to tables in [group tables 30](#test)
 
 Table 39: Souvenir and Handicraft Sales
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
-covdata %>% select()
+covdata %>% select(`1. What is the Company/Organisation/Business name?`, `15. Have you had a decline or increase in your sales in the last 12 months compared to before?`, `16. If your answer is increase or declines, How much is the estimated loss/increase you have got for the last one year in Uganda Shillings due to COVID-19`)  %>% drop_na(`15. Have you had a decline or increase in your sales in the last 12 months compared to before?`) %>% filter(`16. If your answer is increase or declines, How much is the estimated loss/increase you have got for the last one year in Uganda Shillings due to COVID-19`>1000) %>% group_by(`1. What is the Company/Organisation/Business name?`)  %>% kable()
 ```
 
-Table 40: Can Tourism in Uganda survive without International Tourists inflows
+Domestic Tourism					
+Table 40: Can Tourism in Uganda survive without International Tourists inflows						
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
-covdata %>% group_by(Response = `30a. Can Tourism survive without International Tourists inflows?`) %>% drop_na(`30a. Can Tourism survive without International Tourists inflows?`) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% kable()
+covdata %>% group_by(Response = `30a. Can Tourism survive without International Tourists inflows?`) %>% drop_na(`30a. Can Tourism survive without International Tourists inflows?`) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% adorn_totals(where = 'row') %>% kable()
 ```
 
-Table 41: Suggestions to develop the domestic tourism industry
+Table 41: Suggestions to develop the domestic tourism industry:
+
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+effect<-  covdata %>% select(value = `30b. Provide suggestions on how government encourage domestic tourists to travel?`) 
+effect %>% select(value) %>% mutate(bigram = str_to_lower(value))  %>%unnest_tokens(word, value, token = 'ngrams', n = 1) %>% filter(!word %in% stop_words$word) %>% count(word, sort = T) %>% drop_na(word) -> nn
+
+pal <- brewer.pal(8,"Dark2")
+wordcloud(nn$word, nn$n, scale=c(8,.2),min.freq=2, max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal)
+```
 
 Table 42: Do you think there has been growth in Domestic Tourism over the last one year
 ```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
-covdata %>% group_by(Response = `30c. Do you think there has been growth in Domestic Tourism over the last one year?`) %>% drop_na(`30c. Do you think there has been growth in Domestic Tourism over the last one year?`) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% kable()
+covdata %>% group_by(Response = `30c. Do you think there has been growth in Domestic Tourism over the last one year?`) %>% drop_na(`30c. Do you think there has been growth in Domestic Tourism over the last one year?`) %>% summarise(count=n()) %>% mutate(`percent(%)`=paste0(round(count/sum(count)*100),"%")) %>% adorn_totals(where = 'row') %>% kable()
 ```
 
 Table 43: Barriers to growth in Domestic Tourism in 2020
 
-Table 44: Factors that have led to growth of Domestic Tourism in 2020
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+effect<-  covdata %>% select(value = `30d. What do you think has limited growth in Domestic Tourism over the last one year?`) 
+effect %>% select(value) %>% mutate(bigram = str_to_lower(value))  %>%unnest_tokens(word, value, token = 'ngrams', n = 1) %>% filter(!word %in% stop_words$word) %>% count(word, sort = T) %>% drop_na(word) -> nn
 
+pal <- brewer.pal(8,"Dark2")
+wordcloud(nn$word, nn$n, scale=c(8,.2),min.freq=2, max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal)
+```
+
+
+Table 44: Factors that have led to growth of Domestic Tourism in 2020:
+```{r , echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+effect<-  covdata %>% select(value = `30e. What do you think has led to growth of Domestic Tourism over the last one year?`) 
+effect %>% select(value) %>% mutate(bigram = str_to_lower(value))  %>%unnest_tokens(word, value, token = 'ngrams', n = 1) %>% filter(!word %in% stop_words$word) %>% count(word, sort = T) %>% drop_na(word) -> nn
+
+pal <- brewer.pal(8,"Dark2")
+wordcloud(nn$word, nn$n, scale=c(8,.2),min.freq=2, max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal)
+```
+
+ <a href="#top">Back to top</a>
