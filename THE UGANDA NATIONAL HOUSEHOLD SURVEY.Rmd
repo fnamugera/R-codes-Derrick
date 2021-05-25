@@ -23,7 +23,7 @@ library(readxl)
 jos<- readxl::read_xlsx("D:/Learnings/work/Joseph - UTB/Analysis/Survey March 2021/Raw data set Domestic_Tourism_Survey_-_all_versions_-_labels_-_2021-05-18-11-23-04.xlsx", sheet = 'Domestic Tourism Survey')
 ```
 
-### Characteristics of the most recent domestic day and overnight trips undertaken				
-#### Number and type of Trips				
+### Characteristics of the most recent domestic day and overnight trips undertaken
+#### Number and type of Trips
 Table 1.1: Estimated total number of person trips in the three months preceding the survey by type of trip				
 
