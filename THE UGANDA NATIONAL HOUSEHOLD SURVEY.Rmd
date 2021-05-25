@@ -16,14 +16,464 @@ library(reshape2)
 library(tidyr)
 library(data.table)
 library(readxl)
+library(readstata13)
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
 
-jos<- readxl::read_xlsx("D:/Learnings/work/Joseph - UTB/Analysis/Survey March 2021/Raw data set Domestic_Tourism_Survey_-_all_versions_-_labels_-_2021-05-18-11-23-04.xlsx", sheet = 'Domestic Tourism Survey')
+# utb<- readxl::read_xlsx("D:/Learnings/work/Joseph - UTB/Analysis/Survey March 2021/Raw data set Domestic_Tourism_Survey_-_all_versions_-_labels_-_2021-05-18-11-23-04.xlsx", sheet = 'Domestic Tourism Survey')
+# 
+# utb %>% select(- `Hello my name is [Name], I work with the Uganda Tourism Board and we are conducting a survey to study domestic travel trends among residents of Uganda. This study covers major tourism sites around the country and you have been randomly selected to participate in the survey. Information collected from this study will help the government to devise effective strategies of developing domestic travel through marketing and product development. I would wish to ask you a few questions about your travel experiences, which will take less than 10 minutes.`) -> utb
+
+
+utb<-read.dta13("D:/Learnings/work/Joseph - UTB/Analysis/TSTAT/Tourism.dta")
 ```
 
-### Characteristics of the most recent domestic day and overnight trips undertaken				
-#### Number and type of Trips				
+### Characteristics of the most recent domestic day and overnight trips undertaken
+#### Number and type of Trips
+
 Table 1.1: Estimated total number of person trips in the three months preceding the survey by type of trip				
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trip in Uganda in last 3 months (if no. of nights=0)', Nights>0 ~ 'Overnight trip in Uganda (last 3 months)', ))%>% group_by(Nights) %>% summarise(Total = n()) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+
+Table 1.2: Estimated total number of person trips in the last 12 months by type of trip		
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trip in Uganda in last 3 months (if no. of nights=0)', Nights>0 ~ 'Overnight trip in Uganda (last 3 months)', ))%>% group_by(Nights) %>% summarise(Total = n()) %>% mutate(Total = Total*4) %>%  adorn_totals(where = c('row')) %>%  kable()
+```
+
+Table 1.3: Main purpose of visit by recent day and overnight person trips
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ))%>% select(Nights, DT6a, DT6b) %>% pivot_longer(names_to = 'Code', cols = DT6a:DT6b, values_to = 'Purpose') %>% filter(Purpose!= 'None' ) %>% group_by(Nights, Purpose) %>% summarise(Number = n()) %>% group_by(Nights) %>% mutate(percent = round(Number/sum(Number)*100)) %>% pivot_wider(names_from = Nights, values_from = Number:percent) %>% select(Purpose, `Number_Day trips`, `percent_Day trips` ,`Number_Overnight trips`, `percent_Overnight trips`) %>% mutate(Number = rowSums(select(.,`Number_Day trips`, `Number_Overnight trips`)))%>% mutate(percent = round(Number/sum(Number)*100)) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+Table 1.4: Number of recent overnight person trips by Region 
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% group_by(Nights, region) %>% summarise(Number = n()) %>% group_by(Nights) %>% mutate(percent = round(Number/sum(Number)*100)) %>% pivot_wider(names_from = Nights, values_from = Number:percent) %>% select(region, `Number_Day trips`, `percent_Day trips` ,`Number_Overnight trips`, `percent_Overnight trips`) %>% mutate(Number = rowSums(select(.,`Number_Day trips`, `Number_Overnight trips`)))%>% mutate(percent = round(Number/sum(Number)*100)) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+Table 1.5: Main mode of transport used on most recent domestic day and overnight trips (number of recent overnight person trips
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% group_by(Nights, DT4) %>% summarise(Number = n()) %>% group_by(Nights) %>% mutate(percent = round(Number/sum(Number)*100)) %>% pivot_wider(names_from = Nights, values_from = Number:percent) %>% select(DT4, `Number_Day trips`, `percent_Day trips` ,`Number_Overnight trips`, `percent_Overnight trips`) %>% mutate(Number = rowSums(select(.,`Number_Day trips`, `Number_Overnight trips`)))%>% mutate(percent = round(Number/sum(Number, na.rm = T)*100, 2)) %>% mutate_if(is.numeric, .funs = replace_na, 0) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+
+Table 1.6: Age and number of Trips
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% drop_na(age) %>% mutate(hhage =as.numeric(hhage) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')))%>% drop_na(Age) %>% group_by(Nights, Age) %>% summarise(Number = n()) %>% group_by(Nights) %>% mutate(percent = round(Number/sum(Number)*100)) %>% pivot_wider(names_from = Nights, values_from = Number:percent) %>% select(Age, `Number_Day trips`, `percent_Day trips` ,`Number_Overnight trips`, `percent_Overnight trips`) %>% mutate(Number = rowSums(select(.,`Number_Day trips`, `Number_Overnight trips`)))%>% mutate(percent = round(Number/sum(Number, na.rm = T)*100, 2)) %>% mutate_if(is.numeric, .funs = replace_na, 0) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+Table 1.7: Sex and number of Trips
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% group_by(Nights, sex) %>% summarise(Number = n()) %>% group_by(Nights) %>% mutate(percent = round(Number/sum(Number)*100)) %>% pivot_wider(names_from = Nights, values_from = Number:percent) %>% select(sex, `Number_Day trips`, `percent_Day trips` ,`Number_Overnight trips`, `percent_Overnight trips`) %>% mutate(Number = rowSums(select(.,`Number_Day trips`, `Number_Overnight trips`)))%>% mutate(percent = round(Number/sum(Number, na.rm = T)*100, 2)) %>% mutate_if(is.numeric, .funs = replace_na, 0) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+Table 1.8: Number of Trips
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(DT2a = as.numeric(DT2a),Trips = case_when(DT2a == 1 ~ '1 trip', DT2a %in% 2:4~'2-4 trips', DT2a >=5 ~ '5 or more trips', )) %>% drop_na(Trips) %>% group_by(Trips) %>% summarise(Number = n()) %>% mutate(Percent =paste0(round(Number/sum(Number, na.rm = T)*100), '%') ) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+
+Origin of domestic visitors				
+Table 2.1: Visitors District and trips				
+Not seeing districts in the dataset:
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% group_by(subreg) %>% summarise(Number = n())%>% mutate(Percent =paste0(round(Number/sum(Number, na.rm = T)*100), '%') ) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+
+Table 2.2: Domestic tourists by Region																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% group_by(region) %>% summarise(Number = n())%>% mutate(Percent =paste0(round(Number/sum(Number, na.rm = T)*100), '%') ) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+Table 2.3: Main purpose of visit by mode of transport on domestic day trips (DayTrips)
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ))%>% select(Nights, DT6a, DT6b, DT4) %>% pivot_longer(names_to = 'Code', cols = DT6a:DT6b, values_to = 'Purpose') %>% filter(Purpose!= 'None' ) %>%filter(Nights == 'Day trips')  %>% group_by(Purpose, DT4) %>% summarise(Number = n()) %>% pivot_wider(names_from = DT4, values_from = Number) %>% adorn_totals(where = c('row', 'col')) %>% mutate_if(is.numeric, .funs = replace_na, 0) %>%  kable()
+```
+
+
+Table 2.4: Main purpose of visit by mode of transport on domestic day trips (Over night Trips)
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ))%>% select(Nights, DT6a, DT6b, DT4) %>% pivot_longer(names_to = 'Code', cols = DT6a:DT6b, values_to = 'Purpose') %>% filter(Purpose!= 'None' ) %>%filter(Nights == 'Overnight trips')  %>% group_by(Purpose, DT4) %>% summarise(Number = n()) %>% pivot_wider(names_from = DT4, values_from = Number) %>% adorn_totals(where = c('row', 'col')) %>% mutate_if(is.numeric, .funs = replace_na, 0) %>%  kable()
+```
+
+Age and Gender of Tourists																
+Table 3.1: Age composition of Domestic Tourists																
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% drop_na(age) %>% mutate(hhage =as.numeric(hhage) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')))%>% drop_na(Age) %>% group_by(Age) %>% summarise(Number = n()) %>% mutate(percent =paste0(round(Number/sum(Number)*100), '%')) %>% mutate_if(is.numeric, .funs = replace_na, 0) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+
+Table 3.2: Sex Composition of Domestic Tourists																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% drop_na(sex) %>% group_by(sex) %>% summarise(Number = n()) %>% mutate(percent =paste0(round(Number/sum(Number)*100), '%')) %>% mutate_if(is.numeric, .funs = replace_na, 0) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+Table 3.3: Age composition and Tourist Region																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% drop_na(age) %>% mutate(hhage =as.numeric(hhage) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')), Region = case_when(urban==1~'Urban', urban==0 ~ 'Rural',))%>% drop_na(Age) %>% group_by(Age, Region) %>% summarise(Number = n()) %>% pivot_wider(names_from = Region, values_from = Number) %>% adorn_totals(where = c('row', 'col')) %>%  kable()
+```
+
+Table 3.4: Age composition and Tourist Region																
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% drop_na(age) %>% mutate(hhage =as.numeric(hhage) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')), Region = case_when(urban==1~'Urban', urban==0 ~ 'Rural',))%>% drop_na(Age) %>% group_by(Age, region) %>% summarise(Number = n()) %>% pivot_wider(names_from = region, values_from = Number) %>% adorn_totals(where = c('row', 'col')) %>%  kable()
+```
+
+Table 3.5: Age composition and sex of Domestic Tourists																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% drop_na(age) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')), Region = case_when(urban==1~'Urban', urban==0 ~ 'Rural',))%>% drop_na(Age) %>% group_by(Age, sex) %>% summarise(Number = n()) %>% pivot_wider(names_from = sex, values_from = Number) %>% adorn_totals(where = c('row', 'col')) %>%  kable()
+```
+
+Table 3.6: Age composition and purpose of visit																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above'))) %>% select(DT6a, DT6b, Age) %>% pivot_longer(names_to = 'Code', cols = DT6a:DT6b, values_to = 'Purpose') %>% filter(Purpose!= 'None') %>% group_by(Age, Purpose) %>% summarise(Number = n()) %>% pivot_wider(names_from = Purpose, values_from = Number) %>% adorn_totals(where = c('row', 'col')) %>% mutate_if(is.numeric, .funs = replace_na, 0) %>%  kable()
+```
+
+Table 3.7: Demographic analysis for domestic day trips																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% drop_na(age) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips',), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')), Region = case_when(urban==1~'Urban', urban==0 ~ 'Rural',))%>% drop_na(Age) %>% group_by(Nights, sex) %>% summarise(Number = n()) %>% group_by(sex) %>% mutate(percent = paste0(round( Number/sum(Number)*100), '%')) %>% pivot_wider(names_from = Nights, values_from = Number:percent) %>% select(sex, `Number_Day trips`, `percent_Day trips` ,`Number_Overnight trips`, `percent_Overnight trips`) %>% adorn_totals(where = c('row', 'col')) %>%  kable()
+```
+
+Size of Tourist Groups																
+Table 4.1: Tourists Travel Pattern (Alone/ group)
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT3) %>% group_by(DT3) %>% summarise(Number = n())%>% mutate(Percent =paste0(round(Number/sum(Number, na.rm = T)*100), '%') ) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+Table 4.2: Tourists Travel Pattern (Alone/ group) and type of tourist (same day and overnights)
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% drop_na(age) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips',), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')), Region = case_when(urban==1~'Urban', urban==0 ~ 'Rural',))%>% drop_na(Age) %>% group_by(Nights, DT3) %>% summarise(Number = n()) %>% group_by(DT3) %>% mutate(percent = paste0(round( Number/sum(Number)*100), '%')) %>% pivot_wider(names_from = Nights, values_from = Number:percent) %>% select(DT3, `Number_Day trips`, `percent_Day trips` ,`Number_Overnight trips`, `percent_Overnight trips`) %>% adorn_totals(where = c('row', 'col')) %>%  kable()
+```
+
+Table 4.3: Size Distribution of Tourist Groups
+*{Is 1 supposed to be part of the gorup?}*
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT3_1) %>% filter(DT3_1>0) %>% mutate(DT3_1 =as.numeric(DT3_1), size = case_when(DT3_1%in%1:6~as.character(DT3_1), DT3_1%in% 7:10 ~ '7-10', DT3_1 %in% 11:15 ~ '11-15', DT3_1 %in% 16:20 ~ '16-20',  DT3_1 %in% 21:50 ~ '21-50', DT3_1 %in% 51:100 ~ '51-100', DT3_1 >100 ~ 'Above 100', TRUE~as.character(DT3_1))) %>% mutate(size  = factor(size, levels = c(1:6, '7-10', '11-15','16-20','21-50','51-100',  'Above 100')))  %>%  group_by(size) %>% summarise(Number = n())%>% mutate(Percent =paste0(round(Number/sum(Number, na.rm = T)*100), '%') ) %>% adorn_totals(where = c('row')) %>% kable()
+```
+
+
+Table 4.4: Average group sizes, by Tourist Category	
+*The mean is affected by outliers and hence not reliable for reporting. I have included a filter on the group size. To control outliers, i have used data <100 group size for the tables below:*
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% filter(DT3_1<100) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips',), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above'))) %>% group_by(Nights) %>% summarise(Number = n(), Mean =round(mean(DT3_1, na.rm = T)), Median = median(DT3_1, na.rm = T))  %>%  kable()
+```
+
+Table 4.5: Average group sizes, by Purpose of visit
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')))%>% select(DT6a, DT6b, DT3_1) %>% pivot_longer(names_to = 'Code', cols = DT6a:DT6b, values_to = 'Purpose') %>% filter(Purpose!= 'None') %>% group_by(Purpose) %>% summarise(Number = n(), Mean =round(mean(DT3_1, na.rm = T)), Median = median(DT3_1, na.rm = T)) %>%  kable()
+```
+
+Table 4.6: Average group sizes, by Tourist Type, Purpose of visit, continents of residence																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% filter(DT3_1<100) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips',), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above'))) %>% group_by(region) %>% summarise(Number = n(), Mean =round(mean(DT3_1, na.rm = T)), Median = median(DT3_1, na.rm = T))  %>%  kable()
+```
+
+Table 4.7: Domestic tourists by Type of Tourist and Travel Party
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above'))) %>% select(DT6a, DT6b, DT3) %>% pivot_longer(names_to = 'Code', cols = DT6a:DT6b, values_to = 'Purpose') %>% filter(Purpose!= 'None') %>% group_by(Family_size = DT3 , Purpose) %>% summarise(Number = n()) %>% pivot_wider(names_from =Purpose, values_from = Number)%>% adorn_totals(where = c('row', 'col')) %>%  kable()
+```
+
+Table 4.8: Domestic tourists by Region and Travel Party																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')))%>% select(region,  DT3) %>% group_by(Family_size = DT3 , region) %>% summarise(Number = n()) %>% pivot_wider(names_from =region, values_from = Number)%>% adorn_totals(where = c('row', 'col')) %>%  kable()
+```
+
+Main purpose of Visit																
+Table 5.1: Main purpose of visit by day and overnight trips (number of recent overnight person trips
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above',), Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above'))) %>% select(DT6a, DT6b, Nights) %>% pivot_longer(names_to = 'Code', cols = DT6a:DT6b, values_to = 'Purpose') %>% filter(Purpose!= 'None') %>% group_by(Nights , Purpose) %>% summarise(Number = n()) %>% group_by(Nights) %>% mutate(percent = (round( Number/sum(Number)*100))) %>% pivot_wider(names_from = Nights, values_from = Number:percent) %>% select(Purpose, `Number_Day trips`, `percent_Day trips` ,`Number_Overnight trips`, `percent_Overnight trips`) %>% adorn_totals(where = c('row', 'col')) %>%  kable()
+```
+
+Number of Nights Spentand Average Length of Stay																
+Table 6.1: Number of trips by length of stay				
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')), Nights_Cat = case_when(DT5==1 ~'1 night', DT5 %in% 2:3 ~ '1-3 nights', DT5 %in% 4:7 ~ '4-7 nights',  DT5 %in% 8:14 ~ '8-14 nights',  DT5 %in% 15:21 ~ '15-21 nights',  DT5 >= 21~ '22 or more nights', ), Nights_Cat = factor(Nights_Cat, levels = c('1 night', '1-3 nights', '4-7 nights', '8-14 nights', '15-21 nights', '22 or more nights')))%>% filter(DT5>0) %>% group_by(Nights = Nights_Cat) %>% summarise(Number = n()) %>% mutate(Percent = round(Number/sum(Number)*100)) %>% adorn_totals(where = c( 'row')) %>%  kable()
+```
+
+Table 6.2: Distribution of Number of Nights spent in Uganda (Percentage of sub population who stay 1 month or less					
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')), Nights_Cat = case_when(DT5 %in% 1:31 ~ as.character(DT5), DT5 >31 ~ 'More than a months', ), Nights_Cat = factor(Nights_Cat, levels = c(1:31,'More than a months')))%>% filter(DT5>0) %>% group_by(Nights = Nights_Cat) %>% summarise(Number = n()) %>% mutate(Percent = round(Number/sum(Number)*100, 1)) %>% adorn_totals(where = c( 'row')) %>%  kable()
+```
+
+
+Table 6.3: Averages amd Median Of Number of Nights spent by Purpose of viist
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ),  Nights_days = case_when(DT5 %in% 1:15 ~ '1:15', DT5 %in% 1:31 ~ '1-31', )) %>%  select(DT6a, DT6b, Nights, DT5) %>% pivot_longer(names_to = 'Code', cols = DT6a:DT6b, values_to = 'Purpose') %>% filter(Purpose!= 'None', DT5>0, DT5<100) %>% group_by(Purpose) %>% summarise(Number = n(), Average = round(mean(DT5, na.rm = T)), Median = median(DT5, na.rm = T)) %>% left_join(
+  utb %>% drop_na(DT5) %>%filter(DT5 %in% 1:15) %>%   select(DT6a, DT6b, DT5) %>% pivot_longer(names_to = 'Code', cols = DT6a:DT6b, values_to = 'Purpose') %>% filter(Purpose!= 'None', DT5>0) %>% group_by(Purpose) %>% summarise(Average_15days = round(mean(DT5, na.rm = T))))%>% left_join(
+  utb %>% drop_na(DT5) %>%filter(DT5 %in% 1:31) %>%   select(DT6a, DT6b, DT5) %>% pivot_longer(names_to = 'Code', cols = DT6a:DT6b, values_to = 'Purpose') %>% filter(Purpose!= 'None', DT5>0) %>% group_by(Purpose) %>% summarise(Average_31days = round(mean(DT5, na.rm = T)))) %>%  kable()
+```
+
+Table 6.4: Averages and Median Of Number of Nights spent by Region																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5)%>%filter(DT5 %in% 1:99 ) %>% mutate(age =as.numeric(age)) %>%  select(region, DT5)  %>% group_by(region) %>% summarise(Number = n(), Average = round(mean(DT5, na.rm = T)), Median = median(DT5, na.rm = T)) %>% left_join(
+  utb %>% drop_na(DT5) %>%filter(DT5 %in% 1:15) %>%   select(region, DT5) %>% group_by(region) %>% summarise(Average_15days = round(mean(DT5, na.rm = T)))) %>% left_join(
+  utb %>% drop_na(DT5) %>%filter(DT5 %in% 1:31) %>%   select(region, DT5) %>% group_by(region) %>% summarise(Average_31days = round(mean(DT5, na.rm = T)))) %>%  kable()
+```
+
+Table 6.5: Main destination by length of stay for domestic overnight trips																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')), Nights_Cat = case_when(DT5==1 ~'1 night', DT5 %in% 2:3 ~ '1-3 nights', DT5 %in% 4:7 ~ '4-7 nights',  DT5 %in% 8:14 ~ '8-14 nights',  DT5 %in% 15:21 ~ '15-21 nights',  DT5 >= 21~ '22 or more nights', ), Nights_Cat = factor(Nights_Cat, levels = c('1 night', '1-3 nights', '4-7 nights', '8-14 nights', '15-21 nights', '22 or more nights')))%>% filter(DT5>0) %>% group_by(Nights = Nights_Cat, region) %>% summarise(Number = n()) %>% pivot_wider(names_from = Nights, values_from = Number) %>% adorn_totals(where = c( 'row', 'col')) %>% left_join(utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5))%>% filter(DT5 %in% 1:100) %>% group_by( region) %>% summarise(Average =round(mean(DT5, na.rm = T)))) %>%  kable()
+```
+
+Table 6.6: Main purpose of visit and length of stay																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')), Nights_Cat = case_when(DT5==1 ~'1 night', DT5 %in% 2:3 ~ '1-3 nights', DT5 %in% 4:7 ~ '4-7 nights',  DT5 %in% 8:14 ~ '8-14 nights',  DT5 %in% 15:21 ~ '15-21 nights',  DT5 >= 21~ '22 or more nights', ), Nights_Cat = factor(Nights_Cat, levels = c('1 night', '1-3 nights', '4-7 nights', '8-14 nights', '15-21 nights', '22 or more nights')))%>% filter(DT5>0) %>% group_by(Nights = Nights_Cat, DT6a) %>% summarise(Number = n()) %>% pivot_wider(names_from = Nights, values_from = Number) %>% adorn_totals(where = c( 'row', 'col')) %>% left_join(utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5))%>% filter(DT5 %in% 1:100) %>% group_by( DT6a) %>% summarise(Average =round(mean(DT5, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na, '') %>%  kable()
+```
+
+
+Means of Transport while in Uganda																
+Table 7.1: Mode of Transport
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT4) %>% group_by(DT4) %>% summarise(Number = n()) %>% mutate(percent = round(Number/sum(Number, na.rm = T)*100, 1)) %>% mutate_if(is.numeric, .funs = replace_na, 0) %>% adorn_totals(where = c('row')) %>%  kable()
+```
+
+Patterns of Travel																
+Table 8.1: Booking patterns by main purpose of visit for domestic overnight trips													
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% drop_na(DT5) %>% mutate(age =as.numeric(age) ,Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above'))) %>% group_by(DT6a, Nights, DT7) %>% summarise(Number = n()) %>% pivot_wider(names_from = Nights:DT7, values_from = Number) %>% adorn_totals(where = c( 'row', 'col')) %>% mutate_if(is.numeric, .funs = replace_na, 0)%>%  kable()
+```
+
+Expenditure of Domestic Tourists in Uganda																
+Table 9.1: Expenditure by main destination by type of spending for the most resent domestic day and overnight person trips
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, region) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(region, Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% pivot_wider(names_from = Category, values_from = Sum:Median) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%  kable()
+```
+
+Day
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, region, Nights) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5, Nights=='Day trips' ) %>% group_by(region, Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% pivot_wider(names_from = Category, values_from = Sum:Median) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+
+Night
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, region, Nights) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5, Nights=='Overnight trips' ) %>% group_by(region, Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% pivot_wider(names_from = Category, values_from = Sum:Median) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 9.2: Expenditure by main purpose of visit by type of spending for the most recent domestic day and overnight person trips																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT6a) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a, Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% pivot_wider(names_from = Category, values_from = Sum:Median) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%  kable()
+```
+
+Day
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT6a, Nights) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5, Nights=='Day trips' ) %>% group_by(DT6a, Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% pivot_wider(names_from = Category, values_from = Sum:Median) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+
+Night
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT6a, Nights) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5, Nights=='Overnight trips' ) %>% group_by(DT6a, Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% pivot_wider(names_from = Category, values_from = Sum:Median) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 9.3: Domestic tourism expenditure by products, classes of visitors and types of trips										
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, Nights) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Nights, Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% pivot_wider(names_from = Nights, values_from = Sum:Median) %>% mutate_if(is.numeric, .funs = replace_na,"") %>% left_join(
+  
+  utb %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, Nights) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% mutate_if(is.numeric, .funs = replace_na,"")
+)  %>%  kable()
+```
+
+#### I have skipped tables 9.4 to 9.6 since they seem to have been addressed previously.
+
+Average Expenditure per trip		
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8, DT6a) %>% pivot_longer(cols = DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(
+  utb %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8, DT6a) %>% pivot_longer(cols = DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 10.2: Average expenditure per trip  by Age Group																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above'))) %>% select(DT8, Age) %>% pivot_longer(cols = DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Age) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(
+  utb %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above'))) %>% select(DT8, Age) %>% pivot_longer(cols = DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Age) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+
+Table 10.3: Average expenditure per trip  by Region																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8, region) %>% pivot_longer(cols = DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(region) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(
+  utb %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8, region) %>% pivot_longer(cols =DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(region) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+
+Table 10.4: Average expenditure per trip by Length of Stay																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>%filter(DT5>0) %>%  mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Nights_Cat = case_when(DT5==1 ~'1 night', DT5 %in% 2:3 ~ '1-3 nights', DT5 %in% 4:7 ~ '4-7 nights',  DT5 %in% 8:14 ~ '8-14 nights',  DT5 %in% 15:21 ~ '15-21 nights',  DT5 >= 21~ '22 or more nights', ), Nights_Cat = factor(Nights_Cat, levels = c('1 night', '1-3 nights', '4-7 nights', '8-14 nights', '15-21 nights', '22 or more nights'))) %>% select(DT8, Nights_Cat) %>% pivot_longer(cols = DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Nights_Cat) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(
+  utb %>%filter(DT5>0) %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ),Nights_Cat = case_when(DT5==1 ~'1 night', DT5 %in% 2:3 ~ '1-3 nights', DT5 %in% 4:7 ~ '4-7 nights',  DT5 %in% 8:14 ~ '8-14 nights',  DT5 %in% 15:21 ~ '15-21 nights',  DT5 >= 21~ '22 or more nights', ), Nights_Cat = factor(Nights_Cat, levels = c('1 night', '1-3 nights', '4-7 nights', '8-14 nights', '15-21 nights', '22 or more nights'))) %>% select(DT8, Nights_Cat) %>% pivot_longer(cols =DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Nights_Cat) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+
+Table 10.5: Average expenditure per trip by specifc  subcategories of breakdown (in UGSHS)																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT6a) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%
+  
+  left_join(utb %>% filter(DT5<32) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT6a) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Category) %>% summarise(Average_31days = round( mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T))) %>% mutate_if(is.numeric, .funs = replace_na,0) ) %>%   kable()
+```
+
+Table 10.6: Average expenditure per trip by specifc  subcategories of breakdown and Puropose of visit (in UGSHS)						
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT6a) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a, Category) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% pivot_wider(names_from = Category, values_from = Average:Median) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%  kable()
+```
+
+Per Person Per night Expenditures
+Table 11.1: Average expenditure per person per night by Tourist Type																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(DT3_1_rev = case_when(DT3 == 'Alone' ~ 1, TRUE~ as.numeric(DT3_1)), DT8_person = round(DT8/DT3_1_rev), DT8_person_night = round(DT8_person/DT5) , Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Nights_Cat = case_when(DT5==1 ~'1 night', DT5 %in% 2:3 ~ '1-3 nights', DT5 %in% 4:7 ~ '4-7 nights',  DT5 %in% 8:14 ~ '8-14 nights',  DT5 %in% 15:21 ~ '15-21 nights',  DT5 >= 21~ '22 or more nights', ), Nights_Cat = factor(Nights_Cat, levels = c('1 night', '1-3 nights', '4-7 nights', '8-14 nights', '15-21 nights', '22 or more nights')), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')), DT8_night = round(DT8/DT5)) -> utb
+
+
+utb%>% filter(DT5>0, !is.na(DT8))%>% select(DT8_person_night, DT6a) %>% pivot_longer(cols = DT8_person_night, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(utb %>% filter(DT5 %in%1:31,  !is.na(DT8)) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_person_night, DT6a) %>% pivot_longer(cols =DT8_person_night, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 11.2: Average expenditure per person per night by Age Group																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb%>% filter(DT5>0, !is.na(DT8))%>% select(DT8_person_night, Age) %>% pivot_longer(cols = DT8_person_night, names_to = 'Category') %>% filter(value>5) %>% group_by(Age) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(utb%>% filter(DT5>0, !is.na(DT8)) %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_person_night, Age) %>% pivot_longer(cols =DT8_person_night, names_to = 'Category') %>% filter(value>5) %>% group_by(Age) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 11.3: Average expenditure per person per night by region															
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb%>% filter(DT5>0, !is.na(DT8)) %>% select(DT8_person_night, region) %>% pivot_longer(cols = DT8_person_night, names_to = 'Category') %>% filter(value>5) %>% group_by(region) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(utb%>% filter(DT5>0, !is.na(DT8)) %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_person_night, region) %>% pivot_longer(cols =DT8_person_night, names_to = 'Category') %>% filter(value>5) %>% group_by(region) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 11.4: Average expenditure per person per night  by Length of Stay																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% filter(DT5>0, !is.na(DT8)) %>% select(DT8_person_night, Nights_Cat) %>% pivot_longer(cols = DT8_person_night, names_to = 'Category') %>% filter(value>5) %>% group_by(Nights_Cat) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(utb%>% filter(DT5>0, !is.na(DT8)) %>% filter(DT5 <32, DT5>0) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_person_night, Nights_Cat) %>% pivot_longer(cols =DT8_person_night, names_to = 'Category') %>% filter(value>5) %>% group_by(Nights_Cat) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+
+Table 11.5: Average expenditure per person per night by specifc  subcategories of breakdown (in UGSHS)
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% filter(DT5>0, !is.na(DT8)) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT3_1_rev, DT5) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% mutate(value = round(value/DT3_1_rev/DT5)) %>% group_by(Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%
+  
+  left_join(utb %>% filter(DT5%in%1:31, !is.na(DT8)) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT3_1_rev, DT5) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5)%>% mutate(value = round(value/DT3_1_rev/DT5)) %>% group_by(Category) %>% summarise(Average_31days = round( mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T))) %>% mutate_if(is.numeric, .funs = replace_na,0) ) %>%   kable()
+```
+
+Table 11.6: Average expenditure per person per night by specifc  subcategories of breakdown and Puropose of visit (in UGSHS)
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb%>% filter(DT5>0, !is.na(DT8)) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT3_1_rev ,DT6a , DT5) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% mutate(value = round(value/DT3_1_rev/DT5)) %>% group_by(Category, DT6a) %>% summarise(Average = round(mean(value, na.rm = T))) %>% pivot_wider(names_from = DT6a, values_from = Average) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%   kable()
+```
+
+Per party/group Per trip Expenditures																
+Table 12.1: Average expenditure Per party/group Per trip Tourist Type																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8, DT6a) %>% pivot_longer(cols = DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(
+  utb %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8, DT6a) %>% pivot_longer(cols = DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 12.2: Average expenditure Per party/group Per trip Age Group																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above'))) %>% select(DT8, Age) %>% pivot_longer(cols = DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Age) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(
+  utb %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above'))) %>% select(DT8, Age) %>% pivot_longer(cols = DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Age) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 12.3: Average expenditure Per party/group Per trip by Region																
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8, region) %>% pivot_longer(cols = DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(region) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(
+  utb %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8, region) %>% pivot_longer(cols =DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(region) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+
+Table 12.4: Average expenditure Per party/group Per trip by Length of Stay																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>%filter(DT5>0) %>%  mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Nights_Cat = case_when(DT5==1 ~'1 night', DT5 %in% 2:3 ~ '1-3 nights', DT5 %in% 4:7 ~ '4-7 nights',  DT5 %in% 8:14 ~ '8-14 nights',  DT5 %in% 15:21 ~ '15-21 nights',  DT5 >= 21~ '22 or more nights', ), Nights_Cat = factor(Nights_Cat, levels = c('1 night', '1-3 nights', '4-7 nights', '8-14 nights', '15-21 nights', '22 or more nights'))) %>% select(DT8, Nights_Cat) %>% pivot_longer(cols = DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Nights_Cat) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(
+  utb %>%filter(DT5>0) %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ),Nights_Cat = case_when(DT5==1 ~'1 night', DT5 %in% 2:3 ~ '1-3 nights', DT5 %in% 4:7 ~ '4-7 nights',  DT5 %in% 8:14 ~ '8-14 nights',  DT5 %in% 15:21 ~ '15-21 nights',  DT5 >= 21~ '22 or more nights', ), Nights_Cat = factor(Nights_Cat, levels = c('1 night', '1-3 nights', '4-7 nights', '8-14 nights', '15-21 nights', '22 or more nights'))) %>% select(DT8, Nights_Cat) %>% pivot_longer(cols =DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Nights_Cat) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 12.5: Average expenditure Per party/group Per trip by specifc  subcategories of breakdown (in UGSHS)
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT6a) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%
+  
+  left_join(utb %>% filter(DT5<32) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT6a) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(Category) %>% summarise(Average_31days = round( mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T))) %>% mutate_if(is.numeric, .funs = replace_na,0) ) %>%   kable()
+```
+
+Table 12.6: Average expenditure Per party/group Per trip by specifc  subcategories of breakdown and Puropose of visit (in UGSHS)
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT6a) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a, Category) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% pivot_wider(names_from = DT6a, values_from = Average:Median) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%  kable()
+```
+
+Per party/group Per night Expenditures																
+Table 13.1: Average expenditure Per party/group Per night by Tourist Type																
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% filter(DT5>0, !is.na(DT8)) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_night, DT6a) %>% pivot_longer(cols = DT8_night, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(
+  utb %>% filter(DT5>0, !is.na(DT8)) %>% filter(DT5 %in%1:31) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_night, DT6a) %>% pivot_longer(cols = DT8_night, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 13.2: Average expenditure Per party/group Per night by Age Group																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% filter(DT5>0, !is.na(DT8)) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_night, Age) %>% pivot_longer(cols = DT8_night, names_to = 'Category') %>% filter(value>5) %>% group_by(Age) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(
+  utb %>% filter(DT5>0, !is.na(DT8)) %>% filter(DT5 %in%1:31) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_night, Age) %>% pivot_longer(cols = DT8_night, names_to = 'Category') %>% filter(value>5) %>% group_by(Age) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 13.3: Average expenditure Per party/group Per night by Region																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% filter(DT5>0, !is.na(DT8)) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_night, region) %>% pivot_longer(cols = DT8_night, names_to = 'Category') %>% filter(value>5) %>% group_by(region) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(
+  utb %>% filter(DT5>0, !is.na(DT8)) %>% filter(DT5 %in%1:31) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_night, region) %>% pivot_longer(cols = DT8_night, names_to = 'Category') %>% filter(value>5) %>% group_by(region) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 13.4: Average expenditure Per party/group Per night by Length of Stay																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% filter(DT5>0, !is.na(DT8)) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_night, Nights_Cat) %>% pivot_longer(cols = DT8_night, names_to = 'Category') %>% filter(value>5) %>% group_by(Nights_Cat) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(
+  utb %>% filter(DT5>0, !is.na(DT8)) %>% filter(DT5 %in%1:31) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_night, Nights_Cat) %>% pivot_longer(cols = DT8_night, names_to = 'Category') %>% filter(value>5) %>% group_by(Nights_Cat) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 13.5: Average expenditure Per party/group Per night by specifc  subcategories of breakdown (in UGSHS)
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb%>% filter(DT5>0, !is.na(DT8)) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT5) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% mutate(value = round(value/DT5)) %>% group_by(Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%
+  
+left_join(utb%>% filter(DT5>0, !is.na(DT8)) %>% filter(DT5<32) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT5) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5)%>% mutate(value = round(value/DT5)) %>% group_by(Category) %>% summarise(Average_31days = round( mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T))) %>% mutate_if(is.numeric, .funs = replace_na,0) ) %>%   kable()
+```
+
+Table 13.6: Average expenditure Per party/group Per night by specifc  subcategories of breakdown and Puropose of visit (in UGSHS)
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb%>% filter(DT5>0, !is.na(DT8)) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT5 ,DT6a ) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% mutate(value = round(value/DT5)) %>% group_by(Category, DT6a) %>% summarise(Average = round(mean(value, na.rm = T))) %>% pivot_wider(names_from = DT6a, values_from = Average) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%   kable()
+```
+
+Per Person Expenditures																
+Table 14.1: Average expenditure per person by Tourist Type																
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% mutate(DT3_1_rev = case_when(DT3 == 'Alone' ~ 1, TRUE~ as.numeric(DT3_1)), DT8_person = round(DT8/DT3_1_rev), Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', ), Nights_Cat = case_when(DT5==1 ~'1 night', DT5 %in% 2:3 ~ '1-3 nights', DT5 %in% 4:7 ~ '4-7 nights',  DT5 %in% 8:14 ~ '8-14 nights',  DT5 %in% 15:21 ~ '15-21 nights',  DT5 >= 21~ '22 or more nights', ), Nights_Cat = factor(Nights_Cat, levels = c('1 night', '1-3 nights', '4-7 nights', '8-14 nights', '15-21 nights', '22 or more nights')), Age = case_when(age <18 ~ 'Below 18', age %in% 18:29 ~ '18-29 Yrs', age %in% 30:44 ~ '30-44 Yrs', age %in% 45:64 ~ '45-64 Yrs', age>=65 ~ '65 Yrs Above', ),Age = factor(Age, levels = c('Below 18', '18-29 Yrs', '30-44 Yrs', '45-64 Yrs', '65 Yrs Above')), DT8_night = round(DT8/DT5)) -> utb
+
+
+utb%>% select(DT8_person, DT6a) %>% pivot_longer(cols = DT8_person, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(utb %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_person, DT6a) %>% pivot_longer(cols =DT8_person, names_to = 'Category') %>% filter(value>5) %>% group_by(DT6a) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 14.2: Average expenditure per person by Age Group																
+															
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb%>% select(DT8_person, Age) %>% pivot_longer(cols = DT8_person, names_to = 'Category') %>% filter(value>5) %>% group_by(Age) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(utb %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_person, Age) %>% pivot_longer(cols =DT8_person, names_to = 'Category') %>% filter(value>5) %>% group_by(Age) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 14.3: Average expenditure per person by region
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb%>% select(DT8_person, region) %>% pivot_longer(cols = DT8_person, names_to = 'Category') %>% filter(value>5) %>% group_by(region) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(utb %>% filter(DT5 <32) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_person, region) %>% pivot_longer(cols =DT8_person, names_to = 'Category') %>% filter(value>5) %>% group_by(region) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+Table 14.4: Average expenditure per person by Length of Stay
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% filter(DT5>0) %>% select(DT8_person, Nights_Cat) %>% pivot_longer(cols = DT8_person, names_to = 'Category') %>% filter(value>5) %>% group_by(Nights_Cat) %>% summarise(Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% left_join(utb %>% filter(DT5 <32, DT5>0) %>% mutate(Nights = as.numeric(DT5), Nights = case_when(Nights == 0 ~ 'Day trips', Nights>0 ~ 'Overnight trips', )) %>% select(DT8_person, Nights_Cat) %>% pivot_longer(cols =DT8_person, names_to = 'Category') %>% filter(value>5) %>% group_by(Nights_Cat) %>% summarise(Average_31days = round(mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T)))) %>% mutate_if(is.numeric, .funs = replace_na,"")  %>%  kable()
+```
+
+
+Table 14.5: Average expenditure per person by specifc  subcategories of breakdown (in UGSHS)																
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT3_1_rev) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% mutate(value = round(value/DT3_1_rev)) %>% group_by(Category) %>% summarise(Sum = sum(value, na.rm = T), Average = round( mean(value, na.rm = T)), Median =round(median(value, na.rm = T))) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%
+  
+  left_join(utb %>% filter(DT5<32) %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT3_1_rev) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5)%>% mutate(value = round(value/DT3_1_rev)) %>% group_by(Category) %>% summarise(Average_31days = round( mean(value, na.rm = T)), Median_31days =round(median(value, na.rm = T))) %>% mutate_if(is.numeric, .funs = replace_na,0) ) %>%   kable()
+```
+
+Table 14.6: Average expenditure per person by specifc  subcategories of breakdown and Puropose of visit (in UGSHS)
+```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
+utb %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT3_1_rev ,DT6a ) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% mutate(value = round(value/DT3_1_rev)) %>% group_by(Category, DT6a) %>% summarise(Average = round(mean(value, na.rm = T))) %>% pivot_wider(names_from = DT6a, values_from = Average) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%   kable()
+```
