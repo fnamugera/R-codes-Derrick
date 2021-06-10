@@ -31,7 +31,10 @@ utb<-read.dta13("D:/Learnings/work/Joseph - UTB/Analysis/TSTAT/Tourism.dta")
 
 ### Characteristics of the most recent domestic day and overnight trips undertaken
 #### Number and type of Trips
+<<<<<<< HEAD
 
+=======
+>>>>>>> 25d93804d23dcf2604f748fb8c0a4fc656b6bafb
 Table 1.1: Estimated total number of person trips in the three months preceding the survey by type of trip				
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
@@ -475,5 +478,5 @@ utb %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT3_1_rev) %
 
 Table 14.6: Average expenditure per person by specifc  subcategories of breakdown and Puropose of visit (in UGSHS)
 ```{r, echo=FALSE, message=FALSE, warning=FALSE,error=FALSE, comment=NA}
-utb %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT3_1_rev ,DT6a ) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% mutate(value = round(value/DT3_1_rev)) %>% group_by(Category, DT6a) %>% summarise(Average = round(mean(value, na.rm = T))) %>% pivot_wider(names_from = DT6a, values_from = Average) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%   kable()
+utb %>% select(DT9a,	DT9b,	DT9c,	DT9d,	DT9e,	DT9f,	DT9g,	DT9h,	DT8, DT3_1_rev ,DT6a ) %>% pivot_longer(cols = DT9a:DT8, names_to = 'Category') %>% filter(value>5) %>% mutate(value = round(value/DT3_1_rev)) %>% group_by(Category, DT6a) %>% summarise(Average = round(mean(value, na.rm = T))) %>% pivot_wider(names_from = DT6a, values_from = Average) %>% mutate_if(is.numeric, .funs = replace_na,0) %>%   kable() 
 ```
